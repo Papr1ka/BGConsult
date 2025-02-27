@@ -1,0 +1,116 @@
+@startuml
+actor "Любитель настольных игр" as user
+boundary "Telegram ui" as view
+control "Телеграм бот" as viewback
+boundary "API backend" as backview
+control "Backend" as back
+entity "Диалог" as dialog
+entity "Правило" as rule
+
+activate user
+user -> view: Инициирует диалог
+activate view
+view -> viewback: Инициирует диалог
+activate viewback
+viewback -> backview: Получение списка настольных игр
+activate backview
+backview -> back: Получение списка настольных игр
+activate back
+back -> rule: Получение списка настольных игр
+activate rule
+rule --> back: Список настольных игр
+deactivate rule
+back --> backview: Список настольных игр
+deactivate back
+backview --> viewback: Список настольных игр
+deactivate backview
+viewback --> view: Список настольных игр
+deactivate viewback
+view --> user: Запрос на выбор игры
+deactivate view
+user -> view: Выбирает игру
+activate view
+view -> viewback: Выбирает игру
+activate viewback
+viewback -> viewback: Проверяет игру
+activate viewback
+viewback --> view: Результат выбора игры
+deactivate viewback
+deactivate viewback
+view --> user: Результат выбора игры
+deactivate view
+
+loop "Пока не прошёл час с конца последнего вопроса" times
+user -> view: Отправляет вопрос по игре
+activate view
+view -> viewback: Передает вопрос
+activate viewback
+viewback -> backview: Передает вопрос
+activate backview
+backview -> back: Передает вопрос
+activate back
+
+alt "Новый диалог"
+back -> dialog: Создаёт диалог
+activate dialog
+dialog -> back: Данные
+deactivate dialog
+else "Продолжение диалога"
+back -> dialog: Найти диалог
+activate dialog
+dialog -> back: Данные
+deactivate dialog
+end
+
+back -> dialog: Сохраняет вопрос
+activate dialog
+dialog --> back: Успешность записи
+deactivate dialog
+back -> rule: Ищет правила игры
+activate rule
+rule --> back: Возвращает правила
+deactivate rule
+back -> dialog: Получает контекст диалога
+activate dialog
+dialog --> back: Возвращает контекст диалога
+deactivate dialog
+
+back -> back: Генерирует ответ
+activate back
+back -> dialog: Ответ
+activate dialog
+dialog --> back: Успешность записи
+deactivate dialog
+back --> backview: Передает ответ
+deactivate back
+backview --> viewback: Передает ответ
+deactivate backview
+viewback --> view: Передает ответ
+view --> user: Передает ответ
+deactivate view
+end
+deactivate user
+
+group "Был задан вопрос"
+viewback -> view: "Просит оценить качество ответа"
+activate view
+view -> user: "Просит оценить качество ответа"
+activate user
+user --> view: "Оценка качества ответа"
+deactivate user
+view --> viewback: "Оценка качества ответа"
+deactivate view
+viewback -> backview: "Оценка качества ответа"
+activate backview
+backview -> back: "Оценка качества ответа"
+activate back
+back -> dialog: "Оценка качества ответа"
+activate dialog
+dialog --> back: "Успешность записи"
+deactivate dialog
+back --> backview: "Успешность записи"
+deactivate back
+backview --> viewback: "Успешность записи"
+deactivate backview
+end
+@enduml

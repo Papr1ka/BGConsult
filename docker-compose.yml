@@ -1,0 +1,15 @@
+services:
+  bot:
+    build: ./bot
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+    networks:
+      - net0
+
+  back:
+    build: ./back
+    networks:
+      - net0
+
+networks:
+  net0:

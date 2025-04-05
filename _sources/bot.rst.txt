@@ -1,0 +1,21 @@
+bot package
+===========
+
+Submodules
+----------
+
+bot.main module
+---------------
+
+.. automodule:: bot.main
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bot
+   :members:
+   :show-inheritance:
+   :undoc-members:

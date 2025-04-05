@@ -18,6 +18,9 @@ jobs:
           pip install sphinx furo
       - name: Sphinx build
         run: |
+          rm -f docs/source/bot.rst
+          rm -f docs/source/back.rst
+          sphinx-apidoc -o docs/source .
           sphinx-build docs/source _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

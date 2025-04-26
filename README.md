@@ -22,6 +22,10 @@
 └── system_docs             - Справочная информация про систему
 ```
 
+Руководство пользователя:
+
+[Руководство тут](./system_docs/user_guide/guide.md)
+
 Оставить обратную связь:
 
 https://github.com/Papr1ka/BGConsult/issues

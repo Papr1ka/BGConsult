@@ -1,0 +1,21 @@
+bot.handlers package
+====================
+
+Submodules
+----------
+
+bot.handlers.main\_menu module
+------------------------------
+
+.. automodule:: bot.handlers.main_menu
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bot.handlers
+   :members:
+   :show-inheritance:
+   :undoc-members:

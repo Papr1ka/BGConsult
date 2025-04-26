@@ -1,0 +1,29 @@
+back.app.core package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   back.app.core.storage
+
+Submodules
+----------
+
+back.app.core.config module
+---------------------------
+
+.. automodule:: back.app.core.config
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: back.app.core
+   :members:
+   :show-inheritance:
+   :undoc-members:

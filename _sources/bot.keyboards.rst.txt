@@ -1,0 +1,21 @@
+bot.keyboards package
+=====================
+
+Submodules
+----------
+
+bot.keyboards.menu module
+-------------------------
+
+.. automodule:: bot.keyboards.menu
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bot.keyboards
+   :members:
+   :show-inheritance:
+   :undoc-members:

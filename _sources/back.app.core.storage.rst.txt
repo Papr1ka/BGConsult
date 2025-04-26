@@ -1,0 +1,21 @@
+back.app.core.storage package
+=============================
+
+Submodules
+----------
+
+back.app.core.storage.postgres module
+-------------------------------------
+
+.. automodule:: back.app.core.storage.postgres
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: back.app.core.storage
+   :members:
+   :show-inheritance:
+   :undoc-members:

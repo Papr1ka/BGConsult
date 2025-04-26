@@ -1,0 +1,10 @@
+back.app.crud package
+=====================
+
+Module contents
+---------------
+
+.. automodule:: back.app.crud
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,29 @@
+back.app.api package
+====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   back.app.api.routes
+
+Submodules
+----------
+
+back.app.api.main module
+------------------------
+
+.. automodule:: back.app.api.main
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: back.app.api
+   :members:
+   :show-inheritance:
+   :undoc-members:

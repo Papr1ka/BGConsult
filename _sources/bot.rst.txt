@@ -1,0 +1,39 @@
+bot package
+===========
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   bot.config
+   bot.handlers
+   bot.keyboards
+
+Submodules
+----------
+
+bot.create\_bot module
+----------------------
+
+.. automodule:: bot.create_bot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+bot.main module
+---------------
+
+.. automodule:: bot.main
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bot
+   :members:
+   :show-inheritance:
+   :undoc-members:

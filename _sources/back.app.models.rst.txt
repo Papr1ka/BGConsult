@@ -1,0 +1,21 @@
+back.app.models package
+=======================
+
+Submodules
+----------
+
+back.app.models.user module
+---------------------------
+
+.. automodule:: back.app.models.user
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: back.app.models
+   :members:
+   :show-inheritance:
+   :undoc-members:

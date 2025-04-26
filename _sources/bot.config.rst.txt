@@ -1,0 +1,21 @@
+bot.config package
+==================
+
+Submodules
+----------
+
+bot.config.config module
+------------------------
+
+.. automodule:: bot.config.config
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: bot.config
+   :members:
+   :show-inheritance:
+   :undoc-members:

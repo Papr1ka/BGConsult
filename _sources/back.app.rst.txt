@@ -1,0 +1,21 @@
+back.app package
+================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   back.app.api
+   back.app.core
+   back.app.crud
+   back.app.models
+
+Module contents
+---------------
+
+.. automodule:: back.app
+   :members:
+   :show-inheritance:
+   :undoc-members:

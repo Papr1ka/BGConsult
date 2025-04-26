@@ -1,0 +1,21 @@
+back.app.api.routes package
+===========================
+
+Submodules
+----------
+
+back.app.api.routes.question module
+-----------------------------------
+
+.. automodule:: back.app.api.routes.question
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: back.app.api.routes
+   :members:
+   :show-inheritance:
+   :undoc-members:

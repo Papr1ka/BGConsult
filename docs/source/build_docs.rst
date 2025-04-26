@@ -20,5 +20,5 @@
     python -m pip install sphinx furo
     # сборка документации
     cd docs
-    sphinx-apidoc build/ ../
+    sphinx-apidoc -o build/ ../
     make html

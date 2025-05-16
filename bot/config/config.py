@@ -1,8 +1,7 @@
 import os
+from dotenv import load_dotenv
 
-from dotenv import dotenv_values
-
-
+load_dotenv("/bot/.env")
 class Cfg:
     """
     Класс конфигурации для загрузки переменных окружения из .env файла.
@@ -17,8 +16,5 @@ class Cfg:
         Инициализирует конфигурацию, загружая переменные из .env файла,
         расположенного в корне проекта.
         """
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        env_path = os.path.join(base_dir, '.env')
-        env_vars = dotenv_values(env_path)
-        self.token = env_vars['TOKEN']
-        self.api_url = env_vars['API_URL']
+        self.token = os.getenv('TOKEN')
+        self.api_url = os.getenv('API_URL')

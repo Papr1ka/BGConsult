@@ -1,11 +1,11 @@
 FROM python:3.12
 
-WORKDIR /bot
+WORKDIR /
 
 COPY ./requirements.txt /bot/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /bot/requirements.txt
 
-COPY . /bot/app
+COPY . /bot
 
-CMD [ "python", "app/main.py"]
+CMD [ "python", "-m", "bot.main"]

@@ -1,11 +1,11 @@
 FROM python:3.12
 
-WORKDIR /back
+WORKDIR /
 
 COPY ./requirements.txt /back/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /back/requirements.txt
 
-COPY . /back/app
+COPY . /back
 
-CMD [ "python", "app/main.py"]
+CMD [ "python", "-m", "back.main"]

@@ -10,6 +10,8 @@ services:
     build: ./back
     networks:
       - net0
+    ports:
+      - "8080:8080"
 
 networks:
   net0:

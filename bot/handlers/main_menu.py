@@ -82,8 +82,8 @@ async def handle_question(message: Message, state: FSMContext):
     # Запрос к бэкенду
     async with aiohttp.ClientSession() as session:
         try:
-            logger.log(logging.INFO, f"Отправляю запрос: {cfg.api_url}/get_answer с данными {game}, {question}")
-            async with session.post(f"{cfg.api_url}/get_answer",
+            logger.log(logging.INFO, f"Отправляю запрос: {cfg.api_url}/get_answer/ с данными {game}, {question}")
+            async with session.post(f"{cfg.api_url}/get_answer/",
                                     json={"game_name": game, "question": question}) as resp:
                 if resp.status == 200:
                     answer = (await resp.json()).get("answer", "Ответ не найден.")

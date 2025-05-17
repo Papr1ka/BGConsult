@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from loguru import logger
+from back.app.api.services.llm import llm
 
 router = APIRouter(tags=["question"])
 
@@ -41,14 +42,15 @@ async def get_answer(request: QuestionRequest):
     Raises:
     - HTTPException: Если игра или вопрос не найдены, возвращается ошибка 404.
     """
-    logger.debug("The page was assigned")
     question = request.question
     game_name = request.game_name
 
     if game_name == "" or question == "":
         raise HTTPException(status_code=404, detail="Ответ на этот вопрос не найден")
+    
+    answer_from_llm = llm.answer(question, game_name)
 
 
-    answer = f'game_name={game_name} question={question}'
+    answer = f'game_name={game_name} question={question}\n{answer_from_llm}'
 
     return AnswerResponse(answer=answer)

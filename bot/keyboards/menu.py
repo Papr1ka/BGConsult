@@ -33,6 +33,22 @@ def get_back_to_games_button() -> ReplyKeyboardMarkup:
         ReplyKeyboardMarkup: Клавиатура с кнопкой "🔁 Выбрать другую игру".
     """
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="🔁 Выбрать другую игру")]],
+        keyboard=[[KeyboardButton(text="🔁 Выбрать другую игру")],
+                  [KeyboardButton(text="Завершить диалог")]],
         resize_keyboard=True
     )
+
+def get_grade_keyboard() -> InlineKeyboardMarkup:
+    """
+    Возвращает inline-клавиатуру с возможными оценками работы системы.
+
+    Returns:
+        InlineKeyboardMarkup: Клавиатура с кнопками для выбора игр.
+    """
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="1", callback_data="grade_1")],
+        [InlineKeyboardButton(text="2", callback_data="grade_2")],
+        [InlineKeyboardButton(text="3", callback_data="grade_3")],
+        [InlineKeyboardButton(text="4", callback_data="grade_4")],
+        [InlineKeyboardButton(text="5", callback_data="grade_5")]
+    ])

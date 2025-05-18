@@ -48,9 +48,6 @@ async def get_answer(request: QuestionRequest):
     if game_name == "" or question == "":
         raise HTTPException(status_code=404, detail="Ответ на этот вопрос не найден")
     
-    answer_from_llm = llm.answer(question, game_name)
+    answer = llm.answer(question, game_name)
 
-
-    answer = f'game_name={game_name} question={question}\n{answer_from_llm}'
-
-    return AnswerResponse(answer=answer)
+    return AnswerResponse(answer=answer.strip())

@@ -12,6 +12,28 @@ from bot.db_service.db_manager import db
 
 menu_router = Router()
 
+async def get_current_dialog(input_obj):
+    """
+    Вспомогательная функция, возвращающая id текущего диалога в БД. Если активного диалога нет, то он создаётся.
+
+    Args:
+        message (Message): Объект сообщения от пользователя.
+    """
+    username = input_obj.from_user.username
+    user_id = input_obj.from_user.id
+    
+    dialog_id = await db.get_active_dialog_by_username(username)
+    if not dialog_id:
+        dialog_id = await db.start_dialog(user_id=user_id, user_name=username)
+    
+    return dialog_id
+
+async def if_new_dialog_without_grade(input_obj, state: FSMContext):
+    state = await state.get_state()
+    if state == AskRules.waiting_for_grade:
+        dialog_id = await get_current_dialog(input_obj)
+        await db.end_dialog(dialog_id)
+
 
 class AskRules(StatesGroup):
     """
@@ -34,8 +56,16 @@ async def cmd_start(message: Message, state: FSMContext):
         message (Message): Объект сообщения от пользователя.
         state (FSMContext): Контекст состояний пользователя.
     """
+    await if_new_dialog_without_grade(message, state)
+    dialog_id = await get_current_dialog(message)
+
+    await db.add_message(dialog_id, message.text, True)
+
+    answer = "Привет! Я консультант по настольным играм."
+    await db.add_message(dialog_id, answer, False)
+
     await state.clear()
-    await message.answer("Привет! Я консультант по настольным играм.", reply_markup=get_main_keyboard())
+    await message.answer(answer, reply_markup=get_main_keyboard())
 
 @menu_router.message(F.text == "🎲 Спросить про правила")
 @menu_router.message(F.text == "🔁 Выбрать другую игру")
@@ -47,8 +77,16 @@ async def show_game_list(message: Message, state: FSMContext):
         message (Message): Объект сообщения от пользователя.
         state (FSMContext): Контекст состояний пользователя.
     """
+    await if_new_dialog_without_grade(message, state)
+
+    dialog_id = await get_current_dialog(message)
+    await db.add_message(dialog_id, message.text, True)
+
+    answer = "Выбери игру:"
+    await db.add_message(dialog_id, answer, False)
+
     await state.set_state(AskRules.choosing_game)
-    await message.answer("Выбери игру:", reply_markup=get_games_keyboard())
+    await message.answer(answer, reply_markup=get_games_keyboard())
 
 @menu_router.message(F.text == "Завершить диалог")
 async def close_dialog(message: Message, state: FSMContext):
@@ -59,8 +97,14 @@ async def close_dialog(message: Message, state: FSMContext):
         message (Message): Объект сообщения от пользователя.
         state (FSMContext): Контекст состояний пользователя.
     """
+    dialog_id = await get_current_dialog(message)
+    await db.add_message(dialog_id, message.text, True)
+
+    answer = "Диалог завершён! Пожалуйста, оцените работу бота"
+    await db.add_message(dialog_id, answer, False)
+
     await state.set_state(AskRules.waiting_for_grade)
-    await message.answer("Диалог завершён! Пожалуйста, оцените работу бота", reply_markup=get_grade_keyboard())
+    await message.answer(answer, reply_markup=get_grade_keyboard())
 
 @menu_router.callback_query(F.data.startswith("game_"))
 async def handle_game_choice(callback: CallbackQuery, state: FSMContext):
@@ -71,12 +115,20 @@ async def handle_game_choice(callback: CallbackQuery, state: FSMContext):
         callback (CallbackQuery): Объект callback-запроса от inline-кнопки.
         state (FSMContext): Контекст состояний пользователя.
     """
+    await if_new_dialog_without_grade(callback, state)
     game = callback.data.removeprefix("game_")
+
+    dialog_id = await get_current_dialog(callback)
+    await db.add_message(dialog_id, game, True)
+
     await state.update_data(game=game)
     await state.set_state(AskRules.waiting_for_question)
 
+    answer = f"Ты выбрал игру: <b>{game}</b>.\n\nВведи свой вопрос по правилам."
+    await db.add_message(dialog_id, answer, False)
+
     await callback.message.answer(
-        f"Ты выбрал игру: <b>{game}</b>.\n\nВведи свой вопрос по правилам.",
+        answer,
         reply_markup=get_back_to_games_button()
     )
     await callback.answer()
@@ -91,6 +143,16 @@ async def handle_game_choice(callback: CallbackQuery, state: FSMContext):
         state (FSMContext): Контекст состояний пользователя.
     """
     grade = int(callback.data.removeprefix("grade_"))
+
+    dialog_id = await get_current_dialog(callback)
+    await db.add_message(dialog_id, str(grade), True)
+
+    answer = f"Выставленная оценка: {grade}."
+
+    await db.add_message(dialog_id, answer, False)
+    await db.add_rating(dialog_id, grade)
+    await db.end_dialog(dialog_id)
+
     await state.set_state(AskRules.waiting_for_question)
     await callback.message.answer(
         f"Выставленная оценка: {grade}.",
@@ -107,8 +169,15 @@ async def handle_game_choice(callback: CallbackQuery, state: FSMContext):
         callback (CallbackQuery): Объект callback-запроса от inline-кнопки.
         state (FSMContext): Контекст состояний пользователя.
     """
+    await if_new_dialog_without_grade(callback, state)
+    dialog_id = await get_current_dialog(callback)
+    await db.add_message(dialog_id, callback.message.text, True)
+
+    answer = f"Вы не завершили активный диалог"
+    await db.add_message(dialog_id, answer, False)
+
     await callback.message.answer(
-        f"Вы не завершили активный диалог",
+        answer,
         reply_markup=get_main_keyboard()
     )
     await callback.answer()
@@ -122,16 +191,12 @@ async def handle_question(message: Message, state: FSMContext):
         message (Message): Объект сообщения от пользователя.
         state (FSMContext): Контекст состояний пользователя.
     """
+    dialog_id = await get_current_dialog(message)
+    await db.add_message(dialog_id, message.text, True)
+
     data = await state.get_data()
     game = data.get("game")
     question = message.text
-
-    username = message.from_user.username
-    logging.info(username)
-
-    dialog_id = await db.get_active_dialog_by_username(username)
-    logging.info(dialog_id)
-
 
     # Запрос к бэкенду
     async with aiohttp.ClientSession() as session:
@@ -148,4 +213,6 @@ async def handle_question(message: Message, state: FSMContext):
 
             answer = "Непредвиденная ошибка"
 
-    await message.answer(f"<b>Ответ по игре {game}:</b>\n\n{answer}")
+    answer = f"<b>Ответ по игре {game}:</b>\n\n{answer}"
+    await db.add_message(dialog_id, answer, False)
+    await message.answer(answer)

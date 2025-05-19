@@ -30,9 +30,9 @@ class LLMService:
             "return_full_text": False
         }
         try:
-            response = self.client.text_generation(prompt, model=self.model_name, **parameters) + f"\n\nContex:\n{context}"
+            response = self.client.text_generation(prompt, model=self.model_name, **parameters) + f"\n\nЦитата из официальных правил игры:\n<blockquote>{context}</blockquote>"
         except Exception as e:
-            response = f"\n\nContex:\n<blockquote>{context}</blockquote>"
+            response = f"\n\nЦитата из официальных правил игры:\n<blockquote>{context}</blockquote>"
 
         return response
     

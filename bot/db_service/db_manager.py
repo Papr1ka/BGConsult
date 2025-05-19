@@ -83,16 +83,16 @@ class DatabaseManager:
             )
 
     # === Методы для работы с оценками ===
-    async def add_rating(self, dialog_id: int, score: int, feedback: str = None):
+    async def add_rating(self, dialog_id: int, score: int):
         """Добавляет оценку диалогу"""
         await self._ensure_connected()
         async with self.pool.acquire() as conn:
             await conn.execute(
                 """
-                INSERT INTO ratings (dialog_id, score, feedback)
-                VALUES ($1, $2, $3)
+                INSERT INTO ratings (dialog_id, score)
+                VALUES ($1, $2)
                 """,
-                dialog_id, score, feedback
+                dialog_id, score
             )
 
     async def get_user_dialogs(self, user_id: int) -> List[Dict[str, Any]]:

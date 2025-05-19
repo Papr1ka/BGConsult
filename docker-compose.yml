@@ -1,8 +1,6 @@
 services:
   bot:
     build: ./bot
-    environment:
-      - BOT_TOKEN=${BOT_TOKEN}
     networks:
       - net0
 
@@ -25,5 +23,22 @@ services:
     networks:
       - net0
 
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - net0
+
 networks:
   net0:
+
+volumes:
+  postgres_data:

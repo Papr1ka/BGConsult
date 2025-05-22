@@ -1,53 +1,85 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from back.app.core.config import games_info
+from back.app.core.storage.postgres import get_db
+from back.app.models.pg_data import Message, Dialog
+from back.app.models.schemas import QuestionRequest, AnswerResponse
+from back.app.services.llm import llm
+from back.app.services.statistic import DialogService, MessageService, RatingService
 from loguru import logger
-from back.app.api.services.llm import llm
+
 
 router = APIRouter(tags=["question"])
 
-class QuestionRequest(BaseModel):
-    """
-    Модель запроса для получения ответа на вопрос о игре.
+def get_dialogs_service(db: Session = Depends(get_db)):
+    return DialogService(db)
 
-    Attributes:
-    - game_name (str): Название игры, по которой нужно получить ответ.
-    - question (str): Вопрос, на который нужно найти ответ.
-    """
-    game_name: str
-    question: str
+def get_message_service(db: Session = Depends(get_db)):
+    return MessageService(db)
 
-class AnswerResponse(BaseModel):
-    """
-    Модель ответа, которая содержит ответ на заданный вопрос.
-
-    Attributes:
-    - answer (str): Ответ на вопрос, связанный с игрой.
-    """
-    answer: str
+def get_rating_service(db: Session = Depends(get_db)):
+    return RatingService(db)
 
 @router.post("/get_answer/", response_model=AnswerResponse)
-async def get_answer(request: QuestionRequest):
+async def get_answer(
+    request: QuestionRequest,
+    dialog_service: DialogService = Depends(get_dialogs_service),
+    message_service: MessageService = Depends(get_message_service),
+):
     """
-    Ручка для получения ответа на вопрос о конкретной игре.
-
-    Принимает запрос с названием игры и вопросом, ищет ответ в базе данных
-    и возвращает его. В случае ошибки (не найдена игра или вопрос) возвращает ошибку 404.
-
-    Args:
-    - request (QuestionRequest): Объект, содержащий название игры и вопрос.
-
-    Returns:
-    - AnswerResponse: Ответ на вопрос, связанный с игрой.
-
-    Raises:
-    - HTTPException: Если игра или вопрос не найдены, возвращается ошибка 404.
+    Ручка для получения ответа на вопрос о конкретной игре и сохранения диалога.
     """
-    question = request.question
-    game_name = request.game_name
+    try:
+        question = request.question.strip()
+        game_name = request.game_name.strip()
+        user_id = request.user_id  # Предположим, что в запросе есть user_id
+        user_name = request.user_name or "Anonymous"
 
-    if game_name == "" or question == "":
-        raise HTTPException(status_code=404, detail="Ответ на этот вопрос не найден")
-    
-    answer = llm.answer(question, game_name)
+        if not game_name or not question:
+            raise HTTPException(status_code=400, detail="Название игры и вопрос обязательны")
 
-    return AnswerResponse(answer=answer.strip())
+        # Найти активный диалог или создать новый
+        dialog = dialog_service.get_active_dialog_by_username(user_name)
+        if dialog is None:
+            dialog_id = dialog_service.start_dialog(Dialog(user_id=user_id, user_name=user_name, status="active"))
+        else:
+            dialog_id = dialog.dialog_id
+
+        logger.info(dialog_id)
+        logger.info(f"question: {question}\ngame_name: {game_name}\nuser_id: {user_id}\nuser_name: {user_name}")
+        # Получение ответа
+        answer = llm.answer(question, games_info[game_name].file_name).strip()
+
+        logger.info(answer)
+
+
+        # Сохранить вопрос и ответ в сообщения
+        message_service.add_message(Message(dialog_id=dialog_id, text=question, is_from_user=True))
+        message_service.add_message(Message(dialog_id=dialog_id, text=answer, is_from_user=False))
+
+        return AnswerResponse(answer=answer)
+
+    except Exception as e:
+        logger.error(e)
+        raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
+
+
+# @router.post("/rate/", status_code=204)
+# async def rate_dialog(
+#     rating: DialogRatingRequest,
+#     dialog_service: DialogService = Depends(get_dialogs_service)
+# ):
+#     """
+#     Ручка для сохранения оценки диалога
+#     """
+#     try:
+#         if not dialog_service.get_dialog_by_id(rating.dialog_id):
+#             raise HTTPException(status_code=404, detail="Диалог не найден")
+#
+#         dialog_service.add_rating(dialog_id=rating.dialog_id, score=rating.score)
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+

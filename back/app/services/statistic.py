@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from back.app.models.pg_data import Dialog, Message, Rating
 from back.app.crud.base import create_obj, get_obj_by_id, update_obj, delete_obj
-from typing import List, Type
+from typing import List, Type, Optional
 
 
 class DialogService:
@@ -26,8 +26,11 @@ class DialogService:
     def get_user_dialogs(self, user_id: int) -> list[Type[Dialog]]:
         return self.db.query(Dialog).filter_by(user_id=user_id).order_by(Dialog.started_at.desc()).all()
 
-    def get_active_dialog_by_username(self, username: str) -> Type[Dialog] | None:
+    def get_active_dialog_by_username(self, username: str) -> Optional[Dialog] | None:
         return self.db.query(Dialog).filter_by(user_name=username, status="active").order_by(Dialog.started_at.desc()).first()
+
+    def get_active_dialog_by_user_id(self, user_id: int) -> Optional[Dialog]:
+        return self.db.query(Dialog).filter_by(user_id=user_id, status="active").order_by(Dialog.started_at.desc()).first()
 
 class MessageService:
     def __init__(self, db: Session):

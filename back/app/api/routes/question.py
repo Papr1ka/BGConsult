@@ -2,10 +2,10 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from back.app.core.config import games_info
+from back.app.core.config import games_info_by_name
 from back.app.core.storage.postgres import get_db
-from back.app.models.pg_data import Message, Dialog
-from back.app.models.schemas import QuestionRequest, AnswerResponse
+from back.app.models.pg_data import Message, Dialog, Rating
+from back.app.models.schemas import QuestionRequest, AnswerResponse, DialogRatingRequest
 from back.app.services.llm import llm
 from back.app.services.statistic import DialogService, MessageService, RatingService
 from loguru import logger
@@ -50,7 +50,7 @@ async def get_answer(
         logger.info(dialog_id)
         logger.info(f"question: {question}\ngame_name: {game_name}\nuser_id: {user_id}\nuser_name: {user_name}")
         # Получение ответа
-        answer = llm.answer(question, games_info[game_name].file_name).strip()
+        answer = llm.answer(question, games_info_by_name.get(game_name)).strip()
 
         logger.info(answer)
 
@@ -66,20 +66,24 @@ async def get_answer(
         raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
 
 
-# @router.post("/rate/", status_code=204)
-# async def rate_dialog(
-#     rating: DialogRatingRequest,
-#     dialog_service: DialogService = Depends(get_dialogs_service)
-# ):
-#     """
-#     Ручка для сохранения оценки диалога
-#     """
-#     try:
-#         if not dialog_service.get_dialog_by_id(rating.dialog_id):
-#             raise HTTPException(status_code=404, detail="Диалог не найден")
-#
-#         dialog_service.add_rating(dialog_id=rating.dialog_id, score=rating.score)
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/rate/", status_code=204, response_model=None)
+async def rate_dialog(
+    req: DialogRatingRequest,
+    dialog_service: DialogService = Depends(get_dialogs_service),
+    rating_service: RatingService = Depends(get_rating_service),
+):
+    """
+    Ручка для сохранения оценки диалога
+    """
+    try:
+        dialog = dialog_service.get_active_dialog_by_user_id(req.user_id)
+        if dialog is None:
+            raise HTTPException(status_code=404, detail="Диалог не найден")
+
+        rating_service.add_rating(Rating(dialog_id=dialog.dialog_id, score=req.rating))
+        dialog_service.end_dialog(dialog.dialog_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 

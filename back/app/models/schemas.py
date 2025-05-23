@@ -1,19 +1,5 @@
 from pydantic import BaseModel
 
-class UserQuery(BaseModel):
-    user_id: int
-    text: str
-
-class UserResponse(BaseModel):
-    user_id: int
-    answer: str
-
-class RAGQuery(BaseModel):
-    text: str
-
-class RAGResponse(BaseModel):
-    answer: str
-
 
 class QuestionRequest(BaseModel):
     """
@@ -36,3 +22,8 @@ class AnswerResponse(BaseModel):
     - answer (str): Ответ на вопрос, связанный с игрой.
     """
     answer: str
+
+
+class DialogRatingRequest(BaseModel):
+    user_id: int
+    rating: int

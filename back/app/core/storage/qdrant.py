@@ -1,15 +1,13 @@
 import os
-from pathlib import Path
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.models import PointStruct, VectorParams
-from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 import time
 from sentence_transformers import SentenceTransformer
 from loguru import logger
 from back.app.core.config import get_settings
-import uuid
+from back.app.core.storage.postgres import get_db
 
 from back.app.utils.pdf import find_intervals, extract_documents_from_pdf, PDF_DIRECTORY, prepare_data_for_qdrant
 
@@ -18,20 +16,16 @@ from back.app.utils.pdf import find_intervals, extract_documents_from_pdf, PDF_D
 class QdrantService():
     def __init__(self):
         self.qdrant_client = self.connect_to_qdrant()
-        
+
+        self.pg = get_db()
 
         self.embedder = SentenceTransformer("intfloat/multilingual-e5-base", token=get_settings().hf_token)
 
         for pdf_file in os.listdir(PDF_DIRECTORY):
             if pdf_file.endswith('.pdf'):
                 self.refresh_qdrant(pdf_file)
-
-                logger.debug(f"generating chunks...")
-                chunks = extract_documents_from_pdf(pdf_file)
-                logger.debug(f"formating chunks...")
-                data = prepare_data_for_qdrant(chunks, 512)
-                logger.debug(f"saving chunks... len {len(data)}")
-                self.upload_to_qdrant(data, chunks[0].filename)
+                logger.debug(f"pdf_file : {pdf_file}")
+                self.upload_to_qdrant(pdf_file)
 
 
         logger.info("RAG is ready")
@@ -54,7 +48,7 @@ class QdrantService():
         for attempt in range(max_attempts):
             logger.debug(f"Connecting to Qdrant, attempt {attempt + 1}")
             try:
-                client = QdrantClient("localhost", port=6333)
+                client = QdrantClient("qdrant", port=6333)
                 client.get_collections()  # Проверка подключения
                 logger.debug("Qdrant connected")
                 return client
@@ -84,35 +78,7 @@ class QdrantService():
 
 
 
-    # def upload_to_qdrant(self, file_name, collection_name='documents'):
-    #     """
-    #     Загружает данные в коллекцию Qdrant, создавая эмбеддинги для каждого текста.
-    #
-    #     Args:
-    #         data (list[dict]): Список словарей с данными для загрузки.
-    #         collection_name (str): Название коллекции для загрузки данных (по умолчанию 'documents').
-    #     """
-    #     rules_path = BASE_DIR / "back" / "games" / file_name
-    #     logger.debug("Load data to Qdrant")
-    #     with open(rules_path, "r", encoding="utf-8") as file: # /app/back/games/
-    #         chunks = file.read().split("\n\n")
-    #
-    #     points = []
-    #     for i, chunk in enumerate(chunks):
-    #         vector = self.embedder.encode("query: " + chunk).tolist()
-    #         points.append(PointStruct(
-    #             id=str(uuid.uuid4()),
-    #             vector=vector,
-    #             payload={"game": file_name, "text_fragment": chunk}
-    #         ))
-    #
-    #         if (i + 1) % 10 == 0:
-    #             logger.debug(f"{file_name}: {i + 1}/{len(chunks)}")
-    #
-    #     self.qdrant_client.upsert(collection_name=collection_name, points=points)
-    #     logger.debug("Dala loaded")
-
-    def upload_to_qdrant(self, data, collection_name='default', ):
+    def upload_to_qdrant(self, pdf_file):
         """
         Загружает данные в коллекцию Qdrant, создавая эмбеддинги для каждого текста.
 
@@ -120,8 +86,16 @@ class QdrantService():
             data (list[dict]): Список словарей с данными для загрузки.
             collection_name (str): Название коллекции для загрузки данных (по умолчанию 'default').
         """
+        logger.debug(f"generating chunks...")
+        chunks = extract_documents_from_pdf(pdf_file)
+
+        logger.debug(f"formating chunks...")
+        data = prepare_data_for_qdrant(chunks, 512)
+
+        logger.debug(f"saving chunks... len {len(data)}")
+
         points = []
-        collection_info = self.qdrant_client.get_collection(collection_name)
+        collection_info = self.qdrant_client.get_collection(pdf_file)
         cur_id = collection_info.points_count + 1
         for item in data:
             text = item['text']
@@ -136,32 +110,8 @@ class QdrantService():
             ))
             cur_id += 1
         logger.debug(f"Uploaded {len(data)} documents to Qdrant")
-        self.qdrant_client.upsert(collection_name=collection_name, points=points)
+        self.qdrant_client.upsert(collection_name=pdf_file, points=points)
 
-    # def get_relevant_context(self, query: str):
-    #     """
-    #     Осуществляет поиск в Qdrant чанков, соответствующих запросу.
-    #     Args:
-    #         query (str): Вопрос пользователя.
-    #     """
-    #
-    #     query_vector = self.embedder.encode([query])[0]
-    #     hits = self.qdrant_client.search(
-    #         collection_name="documents",
-    #         query_vector=query_vector,
-    #         limit=1,
-    #         with_payload=True,
-    #         query_filter=Filter(
-    #             must=[
-    #                 FieldCondition(
-    #                     key="game",
-    #                     match=MatchValue(value="manchkin_chunks.txt")
-    #                 )
-    #             ]
-    #         )
-    #     )
-    #     context = "\n".join([hit.payload["text_fragment"] for hit in hits])
-    #     return context
 
     def get_relevant_context(self, query: str, collection_name: str):
         """

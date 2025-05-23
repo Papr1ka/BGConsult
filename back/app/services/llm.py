@@ -1,7 +1,8 @@
 from back.app.core.storage.qdrant import qdrant
 from huggingface_hub import InferenceClient
 from loguru import logger
-from back.app.core.config import get_settings, games_info
+from back.app.core.config import get_settings
+from back.app.models.pdf import Game
 
 
 class LLMService:
@@ -10,15 +11,13 @@ class LLMService:
         self.model_name = "mistralai/Mistral-7B-Instruct-v0.3"
         logger.debug(get_settings().hf_token)
         self.client = InferenceClient(token=get_settings().hf_token, provider="hf-inference")
-    
-    def check_health(self):
-        logger.debug("LLM: OK")
 
-    def answer(self, query, game) -> str:
-        context = self.qdb.get_relevant_context(query, game)
+
+    def answer(self, query, game_info: Game) -> str:
+        context = self.qdb.get_relevant_context(query, game_info.file_name)
         logger.debug(f"LLM: Context: {context}")
 
-        prompt = f"""Ты — строго ограниченный помощник по настольной игре "{game}". 
+        prompt = f"""Ты — строго ограниченный помощник по настольной игре "{game_info.name}". 
         Ты можешь использовать **только официальные правила** (цитата ниже) для ответа на вопрос. 
         Если в цитате нет информации для точного ответа — ты **отказываешься** отвечать.
 
@@ -48,9 +47,13 @@ class LLMService:
             response = self.client.text_generation(prompt, model=self.model_name, **parameters)
         except Exception as e:
             logger.error(e)
-            response = f"\n\nЦитата из официальных правил игры:\n<blockquote>{games_info[game].url}</blockquote>"
+            response = f"\n\nЦитата из официальных правил игры:\n<blockquote>{game_info.url}</blockquote>"
 
         logger.debug(f"len(response): {len(response)}\n\nresponse: {response}")
         return response
+
+    def add_pdf(self, pdf_file):
+        self.qdb.create_qdrant_collection(pdf_file)
+
     
 llm = LLMService()

@@ -18,3 +18,4 @@ class Cfg:
         """
         self.token = os.getenv('TOKEN')
         self.api_url = os.getenv('API_URL')
+        self.admin_whitelist = [int(admin) for admin in os.getenv('ADMIN_WHITELIST', '').split(',') if admin.strip()]

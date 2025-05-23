@@ -1,13 +1,6 @@
 import asyncio
-from .handlers.main_menu import menu_router
-from .create_bot import (
-    cfg,
-    ParseMode,
-    DefaultBotProperties,
-    Bot,
-    Dispatcher,
-    MemoryStorage,
-)
+from bot.handlers.main_menu import menu_router
+from bot.create_bot import dp, bot
 
 
 async def main() -> None:
@@ -17,6 +10,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    bot = Bot(token=cfg.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp = Dispatcher(storage=MemoryStorage())
     asyncio.run(main())
